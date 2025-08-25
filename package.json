@@ -1,0 +1,26 @@
+{
+  "name": "lulabs-mcp",
+  "version": "1.0.0",
+  "description": "A Model Context Protocol (MCP) server implementation",
+  "type": "module",
+  "main": "./build/index.js",
+  "bin": {
+    "lulabs-mcp": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod 755 build/index.js",
+    "start": "node build/index.js",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["mcp", "model-context-protocol", "ai", "llm"],
+  "author": "Lulabs",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  }
+}
