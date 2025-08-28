@@ -12,11 +12,18 @@
     "start": "node build/index.js",
     "dev": "tsc --watch"
   },
-  "keywords": ["mcp", "model-context-protocol", "ai", "llm"],
-  "author": "Lulabs",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "llm"
+  ],
+  "author": "Lulabs&YangShiming",
+  "email": "shiming.y@qq.com",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
+    "@larksuiteoapi/node-sdk": "^1.31.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

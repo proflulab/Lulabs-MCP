@@ -8,14 +8,20 @@ import {
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import { validateTimeRange } from './dateUtils.js';
+import { getPersonalSummaryRecords, getMeetingSummaryRecords } from './feishuService.js';
 
 // 定义工具参数的 Zod schema
-const GetWeatherArgsSchema = z.object({
-  location: z.string().describe('The location to get weather for'),
+const GetPersonalSummaryArgsSchema = z.object({
+  name: z.string().describe('学员姓名'),
+  start_time: z.string().describe('查询区间开始时间（YYYY-MM-DD格式）'),
+  end_time: z.string().describe('查询区间结束时间（YYYY-MM-DD格式）'),
 });
 
-const GetTimeArgsSchema = z.object({
-  timezone: z.string().optional().describe('The timezone to get time for (optional)'),
+const GetMeetingSummaryArgsSchema = z.object({
+  name: z.string().describe('学员姓名'),
+  start_time: z.string().describe('查询区间开始时间（YYYY-MM-DD格式）'),
+  end_time: z.string().describe('查询区间结束时间（YYYY-MM-DD格式）'),
 });
 
 // 创建 MCP 服务器实例
@@ -34,31 +40,47 @@ const server = new Server(
 // 定义可用的工具
 const tools: Tool[] = [
   {
-    name: 'get_weather',
-    description: 'Get current weather information for a location',
+    name: 'get_personal_summary',
+    description: '获取某学员指定时间段的个人总结记录（仅返回与该学员自身相关的总结内容）',
     inputSchema: {
       type: 'object',
       properties: {
-        location: {
+        name: {
           type: 'string',
-          description: 'The location to get weather for',
+          description: '学员姓名',
+        },
+        start_time: {
+          type: 'string',
+          description: '查询区间开始时间（YYYY-MM-DD格式）',
+        },
+        end_time: {
+          type: 'string',
+          description: '查询区间结束时间（YYYY-MM-DD格式）',
         },
       },
-      required: ['location'],
+      required: ['name', 'start_time', 'end_time'],
     },
   },
   {
-    name: 'get_time',
-    description: 'Get current time, optionally for a specific timezone',
+    name: 'get_meeting_summary',
+    description: '获取某学员指定时间段的会议整体总结记录（返回包含该学员姓名的会议的整体总结，自动去重）',
     inputSchema: {
       type: 'object',
       properties: {
-        timezone: {
+        name: {
           type: 'string',
-          description: 'The timezone to get time for (optional)',
+          description: '学员姓名',
+        },
+        start_time: {
+          type: 'string',
+          description: '查询区间开始时间（YYYY-MM-DD格式）',
+        },
+        end_time: {
+          type: 'string',
+          description: '查询区间结束时间（YYYY-MM-DD格式）',
         },
       },
-      required: [],
+      required: ['name', 'start_time', 'end_time'],
     },
   },
 ];
@@ -76,45 +98,52 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case 'get_weather': {
-        const { location } = GetWeatherArgsSchema.parse(args);
+      case 'get_personal_summary': {
+        const { name: studentName, start_time, end_time } = GetPersonalSummaryArgsSchema.parse(args);
 
-        // 模拟天气数据
-        const weatherData = {
-          location,
-          temperature: Math.floor(Math.random() * 30) + 10, // 10-40°C
-          condition: ['sunny', 'cloudy', 'rainy', 'snowy'][Math.floor(Math.random() * 4)],
-          humidity: Math.floor(Math.random() * 100),
-          windSpeed: Math.floor(Math.random() * 20),
-        };
+        // 验证时间区间
+        validateTimeRange(start_time, end_time);
+
+        // 获取个人总结记录
+        const records = await getPersonalSummaryRecords(studentName, start_time, end_time);
 
         return {
           content: [
             {
               type: 'text',
-              text: `Weather in ${location}:\n` +
-                `Temperature: ${weatherData.temperature}°C\n` +
-                `Condition: ${weatherData.condition}\n` +
-                `Humidity: ${weatherData.humidity}%\n` +
-                `Wind Speed: ${weatherData.windSpeed} km/h`,
+              text: `学员 ${studentName} 在 ${start_time} 至 ${end_time} 期间的个人总结记录：\n\n` +
+                `共找到 ${records.length} 条记录\n\n` +
+                records.map((record: any, index: number) => {
+                  const fields = record.fields || {};
+                  return `第${index + 1}条记录\n会议名称：${fields.meeting_name?.value?.[0]?.text || '未知'}\n` +
+                    `会议开始时间：${fields.startAt_string?.value?.[0]?.text || '未知'}\n` +
+                    `会议个人总结：${fields.participant_summary?.[0]?.text || '无总结'}\n`;
+                }).join('\n'),
             },
           ],
         };
       }
 
-      case 'get_time': {
-        const { timezone } = GetTimeArgsSchema.parse(args);
+      case 'get_meeting_summary': {
+        const { name: studentName, start_time, end_time } = GetMeetingSummaryArgsSchema.parse(args);
 
-        const now = new Date();
-        const timeString = timezone
-          ? now.toLocaleString('en-US', { timeZone: timezone })
-          : now.toLocaleString();
+        // 验证时间区间
+        validateTimeRange(start_time, end_time);
+
+        // 获取会议总结记录
+        const meetingList = await getMeetingSummaryRecords(studentName, start_time, end_time);
 
         return {
           content: [
             {
               type: 'text',
-              text: `Current time${timezone ? ` in ${timezone}` : ''}: ${timeString}`,
+              text: `学员 ${studentName} 在 ${start_time} 至 ${end_time} 期间参与的会议整体总结：\n\n` +
+                `共找到 ${meetingList.length} 条录制会议记录\n\n` +
+                meetingList.map((meeting: any, index: number) => {
+                  return `第${index + 1}条会议录制记录\n会议名称：${meeting.meeting_name?.value?.[0]?.text || '未知'}\n` +
+                    `会议开始时间：${meeting.startAt_string?.value?.[0]?.text || '未知'}\n` +
+                    `会议总结：${meeting.meeting_summary?.value?.[0]?.text || '无总结'}\n`;
+                }).join('\n'),
             },
           ],
         };
