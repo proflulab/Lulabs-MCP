@@ -10,17 +10,40 @@
   "scripts": {
     "build": "tsc && chmod 755 build/index.js",
     "start": "node build/index.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [
     "mcp",
     "model-context-protocol",
     "ai",
-    "llm"
+    "llm",
+    "feishu",
+    "lark",
+    "meeting-summary"
   ],
-  "author": "Lulabs&YangShiming",
-  "email": "shiming.y@qq.com",
+  "author": {
+    "name": "Lulabs & YangShiming",
+    "email": "shiming.y@qq.com"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lulabs/Lulabs-MCP.git"
+  },
+  "homepage": "https://github.com/lulabs/Lulabs-MCP#readme",
+  "bugs": {
+    "url": "https://github.com/lulabs/Lulabs-MCP/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "build/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
     "@larksuiteoapi/node-sdk": "^1.31.0",
