@@ -1,6 +1,10 @@
 # 陆向谦实验室 MCP 服务
 
-该 MCP 服务用于高效查询陆向谦实验室学员在例会中的总结记录，支持按学员、时间段和记录类型进行灵活筛选。通过该服务，用户可以获取指定学员在某30天周期内的会议总结数据，为后续的进度追踪、表现评估和数据分析提供支持。
+该 MCP 服务用于高效查询陆向谦实验室学员在例会中的总结记录，支持按学员、时间段和记录类型进行灵活筛选。通过该服务，用户可以获取指定学员在某31天周期内的会议总结数据，为后续的进度追踪、表现评估和数据分析提供支持。
+
+## 项目概述
+
+本项目是一个基于 Model Context Protocol (MCP) 的服务器实现，专门为陆向谦实验室设计，用于查询和管理学员的会议总结记录。服务通过飞书多维表格作为数据源，提供标准化的 MCP 接口供 AI 助手调用。
 
 ## 功能特性
 
@@ -24,19 +28,27 @@
 npm install
 ```
 
-### 2. 配置飞书应用
+### 2. 配置环境变量
 
 在使用前，您需要：
 
 1. 在飞书开放平台创建应用
 2. 获取应用的 `App ID` 和 `App Secret`
-3. 获取用户访问令牌 `User Access Token`
-4. 修改 `src/index.ts` 中的配置：
+3. 设置环境变量：
 
-```typescript
-// 将 'your_app_id' 和 'your_app_secret' 替换为实际值
-const client = createLarkClient('your_app_id', 'your_app_secret');
+```bash
+export LARK_APP_ID="your_app_id"
+export LARK_APP_SECRET="your_app_secret"
 ```
+
+或者创建 `.env` 文件：
+
+```env
+LARK_APP_ID=your_app_id
+LARK_APP_SECRET=your_app_secret
+```
+
+**注意**：项目已预配置飞书多维表格信息，无需额外配置表格 ID。
 
 ### 3. 构建项目
 
@@ -123,12 +135,15 @@ npm start
 ### 项目结构
 
 ```text
-lulabs-mcp/
+Lulabs-MCP/
 ├── src/
-│   └── index.ts          # 主服务文件
+│   ├── index.ts          # 主服务文件和 MCP 服务器实现
+│   ├── feishuService.ts  # 飞书 API 服务封装
+│   └── dateUtils.ts      # 日期处理工具函数
 ├── build/                # 编译输出目录
 ├── package.json          # 项目配置
 ├── tsconfig.json         # TypeScript 配置
+├── LICENSE               # MIT 许可证
 └── README.md            # 项目文档
 ```
 
@@ -141,14 +156,46 @@ npm run dev  # 监听文件变化并自动编译
 ### 技术栈
 
 - **Node.js**: 运行环境
-- **TypeScript**: 开发语言
-- **@modelcontextprotocol/sdk**: MCP 协议实现
-- **@larksuiteoapi/node-sdk**: 飞书 API SDK
-- **zod**: 参数验证
+- **TypeScript**: 开发语言，配置为 ES2022 目标和 Node16 模块
+- **@modelcontextprotocol/sdk**: MCP 协议实现 (v1.17.4)
+- **@larksuiteoapi/node-sdk**: 飞书 API SDK (v1.31.0)
+- **zod**: 参数验证和类型安全 (v3.25.76)
+
+### MCP 服务器特性
+
+- 基于标准输入输出 (stdio) 传输
+- 支持工具调用 (tool calling)
+- 完整的错误处理和参数验证
+- 自动去重会议记录
+- 环境变量配置管理
+
+### 使用示例
+
+作为 MCP 服务器，本项目通常与支持 MCP 协议的 AI 助手集成使用：
+
+```bash
+# 启动 MCP 服务器
+npm start
+
+# 或在开发模式下运行
+npm run dev
+```
+
+### 环境要求
+
+- Node.js 18+
+- TypeScript 5.9+
+- 有效的飞书应用凭证
+- 访问陆向谦实验室飞书多维表格的权限
 
 ## 许可证
 
-MIT License
+MIT License - 详见 [LICENSE](LICENSE) 文件
+
+## 作者
+
+- **Lulabs & YangShiming**
+- Email: <shiming.y@qq.com>
 
 ## 支持
 
